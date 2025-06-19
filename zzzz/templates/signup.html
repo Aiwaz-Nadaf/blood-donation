@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient text-white py-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-heartbeat fa-2x me-3"></i>
+                        <h4 class="mb-0">{{ translations.signup }}</h4>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" id="signupForm">
+                        <!-- Personal Information Section -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-light py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-circle text-danger me-2"></i>
+                                    <h5 class="mb-0">Personal Information</h5>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="name" name="name" placeholder="Name" required>
+                                            <label for="name">{{ translations.name }}</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+                                            <label for="email">{{ translations.email }}</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                                            <label for="password">{{ translations.password }}</label>
+                                        </div>
+                                        <div class="form-text text-muted small">{{ translations.help_password }}</div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone" required>
+                                            <label for="phone">{{ translations.phone }}</label>
+                                        </div>
+                                        <div class="form-text text-muted small">{{ translations.help_phone }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medical Information Section -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-light py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-notes-medical text-danger me-2"></i>
+                                    <h5 class="mb-0">Medical Information</h5>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select class="form-select" id="blood_group" name="blood_group" required>
+                                                <option value="">{{ translations.select_blood_group }}</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                            </select>
+                                            <label for="blood_group">{{ translations.blood_group }}</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select class="form-select" id="gender" name="gender" required>
+                                                <option value="">{{ translations.select_gender }}</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                            <label for="gender">{{ translations.gender }}</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input type="number" class="form-control" id="age" name="age" min="18" max="65" placeholder="Age" required>
+                                            <label for="age">{{ translations.age }}</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input type="number" class="form-control" id="height" name="height" min="140" max="220" placeholder="Height" required>
+                                            <label for="height">{{ translations.height }} (cm)</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input type="number" class="form-control" id="weight" name="weight" min="45" max="200" placeholder="Weight" required>
+                                            <label for="weight">{{ translations.weight }} (kg)</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input type="date" class="form-control" id="last_donation" name="last_donation" placeholder="Last Donation">
+                                            <label for="last_donation">{{ translations.last_donation }}</label>
+                                        </div>
+                                        <div class="form-text text-muted small">{{ translations.last_donation_help }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Information Section -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-light py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                    <h5 class="mb-0">Location Information</h5>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-floating mb-3">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="location" name="location" readonly placeholder="Location">
+                                        <button type="button" class="btn btn-danger" onclick="getLocation()">
+                                            <i class="fas fa-map-marker-alt"></i> {{ translations.get_location }}
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="latitude" name="latitude">
+                                    <input type="hidden" id="longitude" name="longitude">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg py-3">
+                                <i class="fas fa-user-plus me-2"></i>{{ translations.signup }}
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p class="mb-0">{{ translations.have_account }} 
+                            <a href="{{ url_for('login') }}" class="text-danger text-decoration-none">{{ translations.login }}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient {
+    background: linear-gradient(45deg, #dc3545, #ff6b6b);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: #dc3545;
+}
+
+.form-control:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.form-select:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.btn-danger {
+    background: linear-gradient(45deg, #dc3545, #ff6b6b);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(45deg, #ff6b6b, #dc3545);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-text {
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.input-group .btn {
+    border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.input-group .form-control {
+    border-radius: 0.375rem 0 0 0.375rem;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Function to get location
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                
+                // Store coordinates
+                document.getElementById('latitude').value = latitude;
+                document.getElementById('longitude').value = longitude;
+                
+                // Get address using reverse geocoding
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const address = data.display_name;
+                        document.getElementById('location').value = address;
+                    })
+                    .catch(error => {
+                        console.error('Error getting address:', error);
+                        document.getElementById('location').value = `${latitude}, ${longitude}`;
+                    });
+            },
+            error => {
+                console.error('Error getting location:', error);
+                alert('{{ translations.location_error }}');
+            }
+        );
+    } else {
+        alert('{{ translations.geolocation_not_supported }}');
+    }
+}
+
+// Function to check donation eligibility
+function checkDonationEligibility() {
+    const lastDonation = document.getElementById('last_donation').value;
+    if (lastDonation) {
+        const donationDate = new Date(lastDonation);
+        const today = new Date();
+        const monthsDiff = (today.getFullYear() - donationDate.getFullYear()) * 12 + 
+                          (today.getMonth() - donationDate.getMonth());
+        
+        if (monthsDiff < 4) {
+            alert('{{ translations.not_eligible_message }}');
+            document.getElementById('last_donation').value = '';
+        }
+    }
+}
+
+document.getElementById('signupForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const phone = document.getElementById('phone').value;
+    const location = document.getElementById('location').value;
+    const age = document.getElementById('age').value;
+    const height = document.getElementById('height').value;
+    const weight = document.getElementById('weight').value;
+    
+    // Password validation
+    if (password.length < 8) {
+        e.preventDefault();
+        alert('{{ translations.password_short }}');
+        return;
+    }
+    
+    // Phone validation (assuming Indian numbers)
+    if (!/^[0-9]{10}$/.test(phone)) {
+        e.preventDefault();
+        alert('{{ translations.invalid_phone_format }}');
+        return;
+    }
+
+    // Location validation
+    if (!location) {
+        e.preventDefault();
+        alert('{{ translations.location_required }}');
+        return;
+    }
+
+    // Age validation
+    if (age < 18 || age > 65) {
+        e.preventDefault();
+        alert('{{ translations.invalid_age }}');
+        return;
+    }
+
+    // Height validation
+    if (height < 140 || height > 220) {
+        e.preventDefault();
+        alert('{{ translations.invalid_height }}');
+        return;
+    }
+
+    // Weight validation
+    if (weight < 45) {
+        e.preventDefault();
+        alert('{{ translations.invalid_weight }}');
+        return;
+    }
+});
+
+// Add event listener for last donation date
+document.getElementById('last_donation').addEventListener('change', checkDonationEligibility);
+</script>
+{% endblock %} 

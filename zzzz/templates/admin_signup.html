@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">{{ translations.admin_signup }}</h4>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-info">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" id="adminSignupForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">{{ translations.name }}</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ translations.email }}</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ translations.password }}</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="form-text">{{ translations.help_password }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="hospital_name" class="form-label">{{ translations.hospital_name }}</label>
+                            <input type="text" class="form-control" id="hospital_name" name="hospital_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="hospital_id" class="form-label">Hospital ID</label>
+                            <input type="text" class="form-control" id="hospital_id" name="hospital_id" required>
+                            <div class="form-text">Format: HOSP001 (must start with HOSP followed by numbers)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">{{ translations.phone }}</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                            <div class="form-text">{{ translations.help_phone }}</div>
+                        </div>
+
+                        <!-- Location Fields -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ translations.location }}</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="location" name="location" readonly>
+                                <button type="button" class="btn btn-outline-danger" onclick="getLocation()">
+                                    <i class="fas fa-map-marker-alt"></i> {{ translations.get_location }}
+                                </button>
+                            </div>
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger">{{ translations.admin_signup }}</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <p>{{ translations.have_account }} <a href="{{ url_for('admin_login') }}">{{ translations.admin_login }}</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Function to get location
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                
+                // Store coordinates
+                document.getElementById('latitude').value = latitude;
+                document.getElementById('longitude').value = longitude;
+                
+                // Get address using reverse geocoding
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const address = data.display_name;
+                        document.getElementById('location').value = address;
+                    })
+                    .catch(error => {
+                        console.error('Error getting address:', error);
+                        document.getElementById('location').value = `${latitude}, ${longitude}`;
+                    });
+            },
+            error => {
+                console.error('Error getting location:', error);
+                alert('{{ translations.location_error }}');
+            }
+        );
+    } else {
+        alert('{{ translations.geolocation_not_supported }}');
+    }
+}
+
+document.getElementById('adminSignupForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const phone = document.getElementById('phone').value;
+    const location = document.getElementById('location').value;
+    const hospitalId = document.getElementById('hospital_id').value;
+    
+    // Password validation
+    if (password.length < 8) {
+        e.preventDefault();
+        alert('{{ translations.password_short }}');
+        return;
+    }
+    
+    // Phone validation (assuming Indian numbers)
+    if (!/^[0-9]{10}$/.test(phone)) {
+        e.preventDefault();
+        alert('{{ translations.invalid_phone_format }}');
+        return;
+    }
+
+    // Hospital ID validation
+    if (!hospitalId.startsWith('HOSP')) {
+        e.preventDefault();
+        alert('Hospital ID must start with HOSP followed by numbers');
+        return;
+    }
+
+    // Location validation
+    if (!location) {
+        e.preventDefault();
+        alert('{{ translations.location_required }}');
+        return;
+    }
+});
+</script>
+{% endblock %} 

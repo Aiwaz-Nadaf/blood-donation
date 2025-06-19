@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Profile Header -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <img src="{{ user.avatar or url_for('static', filename='images/default-avatar.png') }}" 
+                             alt="Profile Picture" 
+                             class="rounded-circle"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    </div>
+                    <h4 class="card-title">{{ user.name }}</h4>
+                    <p class="card-text text-muted">{{ user.email }}</p>
+                    <button class="btn btn-outline-danger" onclick="document.getElementById('avatar-upload').click()">
+                        Change Photo
+                    </button>
+                    <input type="file" id="avatar-upload" style="display: none" accept="image/*">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="profile-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" name="name" value="{{ user.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Blood Group</label>
+                                <input type="text" class="form-control" name="blood_group" value="{{ user.blood_group }}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" name="phone" value="{{ user.phone }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control" name="age" value="{{ user.age }}" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Height (cm)</label>
+                                <input type="number" class="form-control" name="height" value="{{ user.height }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Weight (kg)</label>
+                                <input type="number" class="form-control" name="weight" value="{{ user.weight }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender" required>
+                                <option value="male" {% if user.gender == 'male' %}selected{% endif %}>Male</option>
+                                <option value="female" {% if user.gender == 'female' %}selected{% endif %}>Female</option>
+                                <option value="other" {% if user.gender == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Your Location</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div id="map" 
+                                 data-lat="{{ user.location.coordinates[1]|tojson }}"
+                                 data-lng="{{ user.location.coordinates[0]|tojson }}"
+                                 style="height: 400px;"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <input type="text" class="form-control" id="address" value="{{ user.location.address }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Latitude</label>
+                                <input type="text" class="form-control" id="latitude" value="{{ user.location.coordinates[1] }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Longitude</label>
+                                <input type="text" class="form-control" id="longitude" value="{{ user.location.coordinates[0] }}" readonly>
+                            </div>
+                            <button class="btn btn-danger" onclick="updateLocation()">
+                                Update Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donation History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Donation History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Hospital</th>
+                                    <th>Blood Group</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="donation-history">
+                                <!-- Donation history will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize map
+const mapElement = document.getElementById('map');
+const userLat = parseFloat(mapElement.dataset.lat);
+const userLng = parseFloat(mapElement.dataset.lng);
+var map = L.map('map').setView([userLat, userLng], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// Add marker for user's location
+var userMarker = L.marker([userLat, userLng])
+    .addTo(map)
+    .bindPopup('Your Location')
+    .openPopup();
+
+// Function to update location
+function updateLocation() {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Update map
+            map.setView([lat, lng], 13);
+            userMarker.setLatLng([lat, lng]);
+            
+            // Update coordinates
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            
+            // Get address using reverse geocoding
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('address').value = data.display_name;
+                    
+                    // Update location in database
+                    fetch('/user/update_location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            latitude: lat,
+                            longitude: lng,
+                            address: data.display_name
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Location updated successfully!');
+                        } else {
+                            alert('Error updating location: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating location:', error);
+                        alert('Error updating location. Please try again.');
+                    });
+                })
+                .catch(error => {
+                    console.error('Error getting address:', error);
+                    alert('Error getting address. Please try again.');
+                });
+        }, function(error) {
+            alert('Error getting location: ' + error.message);
+        });
+    } else {
+        alert('Geolocation is not supported by your browser');
+    }
+}
+
+// Handle avatar upload
+document.getElementById('avatar-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        fetch('/user/update_avatar', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update avatar image
+                document.querySelector('.rounded-circle').src = data.avatar_url;
+                alert('Profile picture updated successfully!');
+            } else {
+                alert('Error updating profile picture: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error uploading avatar:', error);
+            alert('Error uploading profile picture. Please try again.');
+        });
+    }
+});
+
+// Handle profile form submission
+document.getElementById('profile-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch('/user/update_profile', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Profile updated successfully!');
+        } else {
+            alert('Error updating profile: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating profile:', error);
+        alert('Error updating profile. Please try again.');
+    });
+});
+
+// Load donation history
+function loadDonationHistory() {
+    fetch('/user/donation_history')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const historyTable = document.getElementById('donation-history');
+                historyTable.innerHTML = '';
+                
+                data.donations.forEach(donation => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(donation.donation_date).toLocaleDateString()}</td>
+                        <td>${donation.hospital_name}</td>
+                        <td>${donation.donor_blood_group}</td>
+                        <td><span class="badge bg-success">Completed</span></td>
+                    `;
+                    historyTable.appendChild(row);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading donation history:', error));
+}
+
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadDonationHistory();
+});
+</script>
+{% endblock %} 

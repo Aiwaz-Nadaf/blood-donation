@@ -1,0 +1,250 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">Blood Donation History</h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Donations</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-donations">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Cooldowns</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-cooldowns">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Blood Group Distribution</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="blood-group-stats">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-pie fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Hospital Distribution</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="hospital-stats">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hospital fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Blood Group</label>
+                        <select class="form-control" id="blood-group-filter">
+                            <option value="">All</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select class="form-control" id="status-filter">
+                            <option value="">All</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" class="form-control" id="start-date-filter">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" class="form-control" id="end-date-filter">
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+        </div>
+    </div>
+
+    <!-- Donation History Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Donation History</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="donation-history-table" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Donor Name</th>
+                            <th>Blood Group</th>
+                            <th>Hospital</th>
+                            <th>Donation Date</th>
+                            <th>Cooldown End</th>
+                            <th>Days Remaining</th>
+                            <th>Cooldown Status</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donation-history-body">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    loadDonationHistory();
+});
+
+// Load statistics
+function loadStats() {
+    fetch('/admin/donation_history/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-donations').textContent = data.stats.total_donations;
+                document.getElementById('active-cooldowns').textContent = data.stats.active_cooldowns;
+                
+                // Update blood group stats
+                const bloodGroupStats = data.stats.blood_group_stats.map(stat => 
+                    `${stat._id}: ${stat.count}`
+                ).join(', ');
+                document.getElementById('blood-group-stats').textContent = bloodGroupStats;
+                
+                // Update hospital stats
+                const hospitalStats = data.stats.hospital_stats.map(stat => 
+                    `${stat._id}: ${stat.count}`
+                ).join(', ');
+                document.getElementById('hospital-stats').textContent = hospitalStats;
+            }
+        })
+        .catch(error => console.error('Error loading stats:', error));
+}
+
+// Load donation history
+function loadDonationHistory() {
+    const bloodGroup = document.getElementById('blood-group-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const startDate = document.getElementById('start-date-filter').value;
+    const endDate = document.getElementById('end-date-filter').value;
+    
+    let url = '/admin/donation_history/data?';
+    if (bloodGroup) url += `blood_group=${bloodGroup}&`;
+    if (status) url += `status=${status}&`;
+    if (startDate) url += `start_date=${startDate}&`;
+    if (endDate) url += `end_date=${endDate}&`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const tbody = document.getElementById('donation-history-body');
+                tbody.innerHTML = '';
+                
+                data.donations.forEach(donation => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${donation.donor_name}</td>
+                        <td>${donation.donor_blood_group}</td>
+                        <td>${donation.hospital_name}</td>
+                        <td>${donation.donation_date}</td>
+                        <td>${donation.cooldown_end}</td>
+                        <td>${donation.days_remaining}</td>
+                        <td>
+                            <span class="badge badge-${donation.cooldown_status === 'Active' ? 'warning' : 'success'}">
+                                ${donation.cooldown_status}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="showContactInfo('${donation.donor_phone}', '${donation.donor_email}')">
+                                Contact
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading donation history:', error));
+}
+
+// Apply filters
+function applyFilters() {
+    loadDonationHistory();
+}
+
+// Show contact information
+function showContactInfo(phone, email) {
+    alert(`Contact Information:\nPhone: ${phone}\nEmail: ${email}`);
+}
+</script>
+{% endblock %} 

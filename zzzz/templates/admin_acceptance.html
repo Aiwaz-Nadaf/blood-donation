@@ -1,0 +1,439 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Blood Donation Acceptances</h2>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Accepted</h5>
+                    <h2 id="totalAccepted">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Selected Donors</h5>
+                    <h2 id="selectedDonors">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Selection</h5>
+                    <h2 id="pendingSelection">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Requests</h5>
+                    <h2 id="totalRequests">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Groups -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Blood Request Groups</h5>
+                    <div class="input-group w-auto">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search requests...">
+                        <button class="btn btn-outline-light" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="requestGroups">
+                        <!-- Request groups will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Donor Selection Modal -->
+<div class="modal fade" id="donorSelectionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Donor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="acceptedDonorsList">
+                    <!-- Accepted donors will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmDonorSelection()">Confirm Selection</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Info Modal -->
+<div class="modal fade" id="userInfoModal" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userInfoModalLabel">User Information</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="user-info">
+                    <p><strong>Name:</strong> <span id="userName"></span></p>
+                    <p><strong>Blood Group:</strong> <span id="userBloodGroup"></span></p>
+                    <p><strong>Email:</strong> <span id="userEmail"></span></p>
+                    <p><strong>Phone:</strong> <span id="userPhone"></span></p>
+                    <p><strong>Address:</strong> <span id="userAddress"></span></p>
+                    <p><strong>Last Donation:</strong> <span id="userLastDonation"></span></p>
+                    <p><strong>Next Eligible:</strong> <span id="userNextEligible"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentRequestId = null;
+let selectedDonorId = null;
+
+// Function to load request statistics
+function loadRequestStats() {
+    fetch('/admin/request_stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalAccepted').textContent = data.stats.accepted_requests;
+                document.getElementById('selectedDonors').textContent = data.stats.selected_donors;
+                document.getElementById('pendingSelection').textContent = data.stats.pending_requests;
+                document.getElementById('totalRequests').textContent = data.stats.total_requests;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading request stats:', error);
+        });
+}
+
+// Function to load request groups
+function loadRequestGroups() {
+    fetch('/admin/request_stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const requestGroups = document.getElementById('requestGroups');
+                if (data.request_details.length === 0) {
+                    requestGroups.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No blood requests found
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Group requests by request_id
+                const groupedRequests = {};
+                data.request_details.forEach(request => {
+                    if (!groupedRequests[request.request_id]) {
+                        groupedRequests[request.request_id] = {
+                            request_id: request.request_id,
+                            created_at: request.created_at,
+                            status: request.status,
+                            blood_group_needed: request.blood_group_needed,
+                            donors: []
+                        };
+                    }
+                    groupedRequests[request.request_id].donors.push(request);
+                });
+
+                // Display each group
+                requestGroups.innerHTML = Object.values(groupedRequests).map(group => {
+                    const acceptedDonors = group.donors.filter(d => d.status === 'responded' && d.response === 'accepted');
+                    const selectedDonor = group.donors.find(d => d.status === 'selected');
+                    
+                    return `
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Request ID: ${group.request_id}</h6>
+                                    <small class="text-muted">Created: ${group.created_at}</small>
+                                    <br>
+                                    <span class="badge bg-danger">Blood Group Needed: ${group.blood_group_needed}</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-${getStatusBadgeColor(group.status)}">
+                                        ${group.status.charAt(0).toUpperCase() + group.status.slice(1)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <h6>Accepted Donors (${acceptedDonors.length})</h6>
+                                        <div class="list-group">
+                                            ${acceptedDonors.map(donor => `
+                                                <div class="list-group-item">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>${donor.donor_name}</strong><br>
+                                                            <small>Blood Group: ${donor.blood_group}</small><br>
+                                                            <small>Phone: ${donor.phone}</small>
+                                                        </div>
+                                                        <div>
+                                                            <span class="badge bg-success">Accepted</span>
+                                                            <br>
+                                                            <small>${donor.response_time}</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Donor Selection</h6>
+                                        ${selectedDonor ? `
+                                            <div class="alert alert-success">
+                                                <strong>Selected Donor:</strong> ${selectedDonor.donor_name}<br>
+                                                <small>Selected on: ${selectedDonor.selection_time}</small>
+                                            </div>
+                                        ` : `
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-info-circle"></i> No donor selected yet
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Donor Name</th>
+                                                <th>Blood Group</th>
+                                                <th>Response</th>
+                                                <th>Response Time</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${group.donors.map(donor => `
+                                                <tr>
+                                                    <td>${donor.donor_name}</td>
+                                                    <td>${donor.blood_group}</td>
+                                                    <td>
+                                                        <span class="badge bg-${donor.response === 'accepted' ? 'success' : 'danger'}">
+                                                            ${donor.response ? donor.response.charAt(0).toUpperCase() + donor.response.slice(1) : 'Pending'}
+                                                        </span>
+                                                    </td>
+                                                    <td>${donor.response_time || 'N/A'}</td>
+                                                    <td>
+                                                        <span class="badge bg-${getStatusBadgeColor(donor.status)}">
+                                                            ${donor.status.charAt(0).toUpperCase() + donor.status.slice(1)}
+                                                        </span>
+                                                        ${donor.cooldown_end ? `
+                                                            <br>
+                                                            <small class="text-muted">Cooldown until: ${donor.cooldown_end}</small>
+                                                        ` : ''}
+                                                    </td>
+                                                    <td>
+                                                        ${donor.status === 'responded' && donor.response === 'accepted' ? `
+                                                            <button class="btn btn-sm btn-info" onclick="viewUserInfo('${donor.user_id}')">
+                                                                <i class="fas fa-user"></i> View Info
+                                                            </button>
+                                                        ` : ''}
+                                                        ${donor.status === 'responded' && donor.response === 'accepted' && !selectedDonor ? `
+                                                            <button class="btn btn-sm btn-success" onclick="selectDonor('${group.request_id}', '${donor.user_id}')">
+                                                                <i class="fas fa-check"></i> Select
+                                                            </button>
+                                                        ` : ''}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading request groups:', error);
+        });
+}
+
+// Function to get badge color based on status
+function getStatusBadgeColor(status) {
+    switch (status) {
+        case 'pending':
+            return 'warning';
+        case 'responded':
+            return 'info';
+        case 'selected':
+            return 'success';
+        case 'rejected':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+
+// Function to open donor selection modal
+function openDonorSelection(requestId, donorId) {
+    currentRequestId = requestId;
+    selectedDonorId = donorId;
+    
+    // Load accepted donors for this request
+    fetch(`/admin/accepted_donors/${requestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const acceptedDonorsList = document.getElementById('acceptedDonorsList');
+                acceptedDonorsList.innerHTML = data.donors.map(donor => `
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="donorSelection" 
+                                       id="donor${donor.user_id}" value="${donor.user_id}"
+                                       ${donor.user_id === selectedDonorId ? 'checked' : ''}>
+                                <label class="form-check-label" for="donor${donor.user_id}">
+                                    <strong>${donor.name}</strong><br>
+                                    Blood Group: ${donor.blood_group}<br>
+                                    Phone: ${donor.phone}<br>
+                                    Email: ${donor.email}<br>
+                                    Distance: ${donor.distance}km<br>
+                                    Response Time: ${donor.response_time}
+                                    ${donor.cooldown_end ? `
+                                        <br>
+                                        <span class="text-danger">
+                                            <i class="fas fa-clock"></i> Cooldown until: ${donor.cooldown_end}
+                                        </span>
+                                    ` : ''}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('donorSelectionModal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading accepted donors:', error);
+        });
+}
+
+// Function to confirm donor selection
+function confirmDonorSelection() {
+    const selectedDonor = document.querySelector('input[name="donorSelection"]:checked');
+    if (!selectedDonor) {
+        alert('Please select a donor');
+        return;
+    }
+
+    const donorId = selectedDonor.value;
+    
+    fetch('/admin/select_donor', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            request_id: currentRequestId,
+            user_id: donorId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Donor selected successfully. They will be in a 90-day cooldown period.');
+            // Close modal and reload data
+            bootstrap.Modal.getInstance(document.getElementById('donorSelectionModal')).hide();
+            loadRequestStats();
+            loadRequestGroups();
+        } else {
+            alert(data.error || 'Error selecting donor');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error selecting donor');
+    });
+}
+
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('#requestGroups .card');
+    
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+});
+
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadRequestStats();
+    loadRequestGroups();
+    
+    // Refresh data every 30 seconds
+    setInterval(function() {
+        loadRequestStats();
+        loadRequestGroups();
+    }, 30000);
+});
+
+function viewUserInfo(userId) {
+    fetch(`/admin/user/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const user = data.user;
+                document.getElementById('userName').textContent = user.name;
+                document.getElementById('userBloodGroup').textContent = user.blood_group;
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userPhone').textContent = user.phone;
+                document.getElementById('userAddress').textContent = user.location.address || 'Not provided';
+                document.getElementById('userLastDonation').textContent = user.last_donation_date || 'Never';
+                document.getElementById('userNextEligible').textContent = user.cooldown_end || 'Available now';
+                $('#userInfoModal').modal('show');
+            } else {
+                alert('Failed to fetch user information');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error fetching user information');
+        });
+}
+</script>
+{% endblock %} 

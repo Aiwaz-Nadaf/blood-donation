@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">Admin Portal</h1>
+            <p class="lead mb-4">Welcome to the Blood Donation System Admin Portal</p>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-info">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card mb-4 admin-card">
+                        <div class="card-body">
+                            <i class="fas fa-sign-in-alt fa-3x text-danger mb-3"></i>
+                            <h5 class="card-title">Already have an account?</h5>
+                            <p class="card-text">Login to access your admin dashboard</p>
+                            <a href="{{ url_for('admin_login') }}" class="btn btn-danger btn-lg w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Admin Login
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4 admin-card">
+                        <div class="card-body">
+                            <i class="fas fa-hospital fa-3x text-danger mb-3"></i>
+                            <h5 class="card-title">New Hospital?</h5>
+                            <p class="card-text">Register your hospital to join our network</p>
+                            <a href="{{ url_for('admin_signup') }}" class="btn btn-outline-danger btn-lg w-100">
+                                <i class="fas fa-hospital me-2"></i>Register Hospital
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('landing') }}" class="text-muted">
+                    <i class="fas fa-arrow-left"></i> Back to Main Page
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.admin-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.admin-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.admin-card .card-body {
+    padding: 2rem;
+}
+
+.admin-card .fa-3x {
+    margin-bottom: 1.5rem;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border: none;
+    box-shadow: 0 4px 6px rgba(220, 53, 69, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-outline-danger {
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(220, 53, 69, 0.2);
+}
+
+.text-muted {
+    transition: all 0.3s ease;
+}
+
+.text-muted:hover {
+    color: #dc3545 !important;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .admin-card {
+        margin-bottom: 1.5rem;
+    }
+}
+</style>
+{% endblock %} 

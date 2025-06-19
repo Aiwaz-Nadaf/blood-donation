@@ -1,0 +1,875 @@
+<!-- Chatbot Button -->
+<div class="chatbot-button" onclick="toggleChat()">
+    <div class="chatbot-icon">
+        <i class="fas fa-comments"></i>
+    </div>
+    <div class="chatbot-text">
+        <span>Need Help?</span>
+        <div class="status-indicator online"></div>
+    </div>
+</div>
+
+<!-- Chat Window -->
+<div class="chat-window">
+    <div class="chat-header">
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='images/bot-avatar.png') }}" alt="Bot Avatar" class="bot-avatar me-2">
+            <h5 class="mb-0">Blood Donation Assistant</h5>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="language-selector me-3">
+                <select id="languageSelect" class="form-select form-select-sm" onchange="changeLanguage()">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="mr">मराठी</option>
+                    <option value="bn">বাংলা</option>
+                    <option value="ta">தமிழ்</option>
+                    <option value="te">తెలుగు</option>
+                </select>
+            </div>
+            <button class="btn-close" onclick="toggleChat()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <!-- Welcome message with bot avatar -->
+        <div class="message bot">
+            <div class="message-avatar">
+                <img src="{{ url_for('static', filename='images/bot-avatar.png') }}" alt="Bot Avatar">
+            </div>
+            <div class="message-content">
+                <p>Hello! I'm your Blood Donation Assistant. How can I help you today?</p>
+                <div class="message-time">Just now</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predefined Questions Section -->
+    <div class="predefined-questions">
+        <div class="question-category">
+            <div class="category-title">Health and Safety</div>
+            <div class="question-list">
+                <div class="question-item" onclick="handlePredefinedQuestion('Before Donation Health Tips')">Before Donation Health Tips</div>
+                <div class="question-item" onclick="handlePredefinedQuestion('After Donation Health Tips')">After Donation Health Tips</div>
+                <div class="question-item" onclick="handlePredefinedQuestion('Regular Health Tips for Better Blood Quality')">Regular Health Tips</div>
+            </div>
+        </div>
+        <div class="question-category">
+            <div class="category-title">Eligibility Criteria</div>
+            <div class="question-list">
+                <div class="question-item" onclick="handlePredefinedQuestion('Age and Weight Requirements')">Age and Weight Requirements</div>
+                <div class="question-item" onclick="handlePredefinedQuestion('Donation Frequency')">Donation Frequency</div>
+                <div class="question-item" onclick="handlePredefinedQuestion('Temporary Restrictions')">Temporary Restrictions</div>
+            </div>
+        </div>
+        <div class="question-category">
+            <div class="category-title">Accidents and Precautions</div>
+            <div class="question-list">
+                <div class="question-item" onclick="handlePredefinedQuestion('Medical Material Blood Loss Prevention')">Prevent Blood Loss with Medical Materials</div>
+                <div class="question-item" onclick="handlePredefinedQuestion('Home Blood Loss Prevention')">Prevent Blood Loss at Home</div>
+                <div class="question-item" onclick="handlePredefinedQuestion('Outside Blood Loss Prevention')">Prevent Blood Loss Outside</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-input">
+        <div class="input-group">
+            <input type="text" id="userInput" class="form-control" placeholder="Type your message...">
+            <button class="btn btn-danger" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Chatbot Button */
+.chatbot-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #dc3545;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.chatbot-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.chatbot-icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.chatbot-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+}
+
+/* Chat Window */
+.chat-window {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 400px;
+    height: 600px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.chat-window.show {
+    display: flex;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.bot-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    display: flex;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    margin: 0 10px;
+    flex-shrink: 0;
+}
+
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    position: relative;
+}
+
+.message.user .message-content {
+    background-color: #dc3545;
+    color: white;
+    border-top-right-radius: 0;
+}
+
+.message.bot .message-content {
+    background-color: #f8f9fa;
+    border-top-left-radius: 0;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    opacity: 0.7;
+}
+
+.message.user .message-time {
+    text-align: right;
+}
+
+.chat-input {
+    padding: 15px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.chat-input textarea {
+    flex-grow: 1;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 10px 15px;
+    resize: none;
+    max-height: 100px;
+    font-family: inherit;
+}
+
+.chat-input button {
+    background: #dc3545;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.chat-input button:hover {
+    background: #c82333;
+}
+
+/* Predefined Questions */
+.predefined-questions {
+    padding: 15px;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.question-category {
+    margin-bottom: 15px;
+}
+
+.category-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.question-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.question-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+}
+
+.question-item:hover {
+    background: #e9ecef;
+    border-color: #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .chat-window {
+        width: 100%;
+        height: 100%;
+        bottom: 0;
+        right: 0;
+        border-radius: 0;
+    }
+    
+    .chatbot-button {
+        bottom: 10px;
+        right: 10px;
+        padding: 12px 20px;
+    }
+}
+
+/* Add styles for language selector */
+.language-selector {
+    margin-right: 10px;
+}
+
+.language-selector select {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 100px;
+}
+
+.language-selector select option {
+    background-color: white;
+    color: #333;
+}
+
+.language-selector select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* RTL support for messages */
+.message[dir="rtl"] {
+    flex-direction: row-reverse;
+}
+
+.message[dir="rtl"] .message-content {
+    border-radius: 15px 15px 15px 5px;
+}
+
+/* RTL support for chat input */
+.chat-input[dir="rtl"] {
+    flex-direction: row-reverse;
+}
+
+.chat-input[dir="rtl"] textarea {
+    text-align: right;
+}
+</style>
+
+<script>
+let currentLanguage = 'en';
+let isChatOpen = false;
+
+function toggleChat() {
+    const chatWindow = document.querySelector('.chat-window');
+    const chatbotButton = document.querySelector('.chatbot-button');
+    
+    if (!isChatOpen) {
+        chatWindow.classList.add('show');
+        chatbotButton.style.display = 'none';
+        isChatOpen = true;
+    } else {
+        chatWindow.classList.remove('show');
+        chatbotButton.style.display = 'flex';
+        isChatOpen = false;
+    }
+}
+
+function changeLanguage() {
+    const select = document.getElementById('languageSelect');
+    currentLanguage = select.value;
+    
+    // Update chat direction for RTL languages
+    const chatMessages = document.getElementById('chatMessages');
+    if (['ar', 'he', 'ur'].includes(currentLanguage)) {
+        chatMessages.dir = 'rtl';
+    } else {
+        chatMessages.dir = 'ltr';
+    }
+    
+    // Update placeholder text
+    const userInput = document.getElementById('userInput');
+    const placeholders = {
+        'en': 'Type your message...',
+        'hi': 'अपना संदेश यहाँ लिखें...',
+        'mr': 'तुमचा संदेश इथे लिहा...',
+        'bn': 'এখানে আপনার বার্তা লিখুন...',
+        'ta': 'உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்...',
+        'te': 'మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి...'
+    };
+    userInput.placeholder = placeholders[currentLanguage] || placeholders['en'];
+    
+    // Update welcome message
+    const welcomeMessages = {
+        'en': 'Hello! I\'m your Blood Donation Assistant. How can I help you today?',
+        'hi': 'नमस्ते! मैं आपका रक्तदान सहायक हूं। मैं आपकी कैसे मदद कर सकता हूं?',
+        'mr': 'नमस्कार! मी तुमचा रक्तदान सहाय्यक आहे. मी तुम्हाला कशी मदत करू शकतो?',
+        'bn': 'হ্যালো! আমি আপনার রक्तদান সহকারী। আমি আপনাকে কীভাবে সাহায্য করতে পারি?',
+        'ta': 'வணக்கம்! நான் உங்கள் இரத்த தானம் உதவியாளர். நான் உங்களுக்கு எப்படி உதவ முடியும்?',
+        'te': 'హలో! నేను మీ రక్త దాన సహాయకుడిని. నేను మీకు ఎలా సహాయం చేయగలను?'
+    };
+    
+    const welcomeMessage = document.querySelector('.message.bot .message-content p');
+    welcomeMessage.textContent = welcomeMessages[currentLanguage] || welcomeMessages['en'];
+
+    // Update category titles
+    const categoryTitles = {
+        'en': {
+            'health': 'Health and Safety',
+            'eligibility': 'Eligibility Criteria',
+            'process': 'Accidents and Precautions'
+        },
+        'hi': {
+            'health': 'स्वास्थ्य और सुरक्षा',
+            'eligibility': 'पात्रता मानदंड',
+            'process': 'दुर्घटनाएं और सावधानियां'
+        },
+        'mr': {
+            'health': 'आरोग्य आणि सुरक्षा',
+            'eligibility': 'पात्रता निकष',
+            'process': 'अपघात आणि सावधानता'
+        },
+        'bn': {
+            'health': 'স্বাস্থ্য এবং নিরাপত্তা',
+            'eligibility': 'যোগ্যতার মানদণ্ড',
+            'process': 'দুর্ঘটনা এবং সতর্কতা'
+        },
+        'ta': {
+            'health': 'ஆரோக்கியம் மற்றும் பாதுகாப்பு',
+            'eligibility': 'தகுதி அளவுகோல்கள்',
+            'process': 'விபத்துக்கள் மற்றும் முன்னெச்சரிக்கைகள்'
+        },
+        'te': {
+            'health': 'ఆరోగ్యం మరియు భద్రత',
+            'eligibility': 'అర్హత నిబంధనలు',
+            'process': 'ప్రమాదాలు మరియు జాగ్రత్తలు'
+        }
+    };
+
+    const titles = categoryTitles[currentLanguage] || categoryTitles['en'];
+    document.querySelectorAll('.category-title').forEach((title, index) => {
+        if (index === 0) title.textContent = titles.health;
+        else if (index === 1) title.textContent = titles.eligibility;
+        else if (index === 2) title.textContent = titles.process;
+    });
+
+    // Update predefined questions
+    const questions = questionTranslations[currentLanguage] || questionTranslations['en'];
+    document.querySelectorAll('.question-item').forEach((item, index) => {
+        const originalQuestion = Object.keys(questionTranslations['en'])[index];
+        item.textContent = questions[originalQuestion];
+        item.onclick = () => handlePredefinedQuestion(questions[originalQuestion]);
+    });
+}
+
+function sendMessage() {
+    const userInput = document.getElementById('userInput');
+    const message = userInput.value.trim();
+    
+    if (message) {
+        addMessage(message, 'user');
+        userInput.value = '';
+        
+        // Get AI response
+        getAIResponse(message);
+    }
+}
+
+function addMessage(text, sender) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    
+    // Add avatar
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'message-avatar';
+    const avatarImg = document.createElement('img');
+    avatarImg.src = sender === 'user' 
+        ? "{{ url_for('static', filename='images/user-avatar.png') }}"
+        : "{{ url_for('static', filename='images/bot-avatar.png') }}";
+    avatarImg.alt = sender === 'user' ? 'User Avatar' : 'Bot Avatar';
+    avatarDiv.appendChild(avatarImg);
+    messageDiv.appendChild(avatarDiv);
+    
+    // Add message content
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    const textP = document.createElement('p');
+    textP.textContent = text;
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = 'Just now';
+    
+    contentDiv.appendChild(textP);
+    contentDiv.appendChild(timeDiv);
+    messageDiv.appendChild(contentDiv);
+    
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function getAIResponse(message) {
+    try {
+        // Show loading state
+        const loadingMessage = addMessage('Thinking...', 'bot');
+        
+        // First check if the message matches any predefined questions
+        const questions = questionTranslations[currentLanguage] || questionTranslations['en'];
+        const answers = predefinedQuestions[currentLanguage] || predefinedQuestions['en'];
+        
+        // Find matching predefined question
+        const matchingQuestion = Object.keys(questions).find(
+            key => questions[key].toLowerCase() === message.toLowerCase()
+        );
+        
+        if (matchingQuestion) {
+            // If it's a predefined question, use the predefined answer
+            const answer = answers[matchingQuestion];
+            if (answer) {
+                loadingMessage.remove();
+                addMessage(answer, 'bot');
+                return;
+            }
+        }
+        
+        // If not a predefined question, send to backend API
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                language: currentLanguage
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            loadingMessage.remove();
+            addMessage(data.response, 'bot');
+        } else {
+            loadingMessage.remove();
+            addMessage('I apologize, but I am having trouble processing your request. Please try again or rephrase your question.', 'bot');
+        }
+    } catch (error) {
+        console.error('Error getting AI response:', error);
+        loadingMessage.remove();
+        addMessage('I apologize, but I am having trouble processing your request. Please try again or rephrase your question.', 'bot');
+    }
+}
+
+// Handle Enter key in textarea
+document.getElementById('userInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Initialize chat with default language
+document.addEventListener('DOMContentLoaded', function() {
+    changeLanguage();
+});
+
+// Update the handlePredefinedQuestion function to properly handle language changes
+function handlePredefinedQuestion(question) {
+    // Get the current language's translations
+    const questions = questionTranslations[currentLanguage] || questionTranslations['en'];
+    const answers = predefinedQuestions[currentLanguage] || predefinedQuestions['en'];
+    
+    // Find the original English question key
+    const originalQuestion = Object.keys(questionTranslations['en']).find(
+        key => questions[key] === question
+    );
+    
+    if (originalQuestion) {
+        // Add the question in the current language
+        addMessage(question, 'user');
+        
+        // Get the answer in the current language
+        let answer = answers[originalQuestion];
+        
+        // If answer is not available in current language, fallback to English
+        if (!answer) {
+            answer = predefinedQuestions['en'][originalQuestion];
+        }
+        
+        // Add the answer
+        addMessage(answer, 'bot');
+    }
+}
+
+// Update the predefinedQuestions data structure to include Hindi translations
+const predefinedQuestions = {
+    'en': {
+        'Before Donation Health Tips': "Here are important health tips before donating blood:\n\n" +
+            "1. Get adequate sleep (7-8 hours)\n" +
+            "2. Eat a healthy meal 2-3 hours before donation\n" +
+            "3. Drink plenty of water (at least 2-3 glasses)\n" +
+            "4. Avoid fatty foods\n" +
+            "5. Don't smoke for at least 1 hour before donation\n" +
+            "6. Avoid alcohol for 24 hours before donation\n" +
+            "7. Wear comfortable clothing with sleeves that can be rolled up",
+        'After Donation Health Tips': "Important tips to follow after donating blood:\n\n" +
+            "1. Rest for 10-15 minutes after donation\n" +
+            "2. Drink extra fluids for 48 hours\n" +
+            "3. Avoid heavy lifting or strenuous exercise for 24 hours\n" +
+            "4. Keep the bandage on for several hours\n" +
+            "5. Eat iron-rich foods\n" +
+            "6. Avoid alcohol for 24 hours\n" +
+            "7. If you feel dizzy, lie down with feet elevated",
+        'Regular Health Tips for Better Blood Quality': "To maintain good blood quality for donation:\n\n" +
+            "1. Maintain a balanced diet rich in iron\n" +
+            "2. Stay hydrated (8-10 glasses of water daily)\n" +
+            "3. Exercise regularly\n" +
+            "4. Get adequate sleep\n" +
+            "5. Avoid smoking and excessive alcohol\n" +
+            "6. Manage stress levels\n" +
+            "7. Regular health check-ups",
+        'Age and Weight Requirements': "To be eligible for blood donation:\n\n" +
+            "1. Age: 18-65 years\n" +
+            "2. Weight: Minimum 45 kg\n" +
+            "3. Hemoglobin: 12.5g/dL minimum\n" +
+            "4. Blood pressure: 90/60 to 160/100 mmHg\n" +
+            "5. Body temperature: Normal (98.6°F/37°C)",
+        'Donation Frequency': "Blood donation frequency guidelines:\n\n" +
+            "1. Whole blood: Every 56 days (8 weeks)\n" +
+            "2. Platelets: Every 7 days\n" +
+            "3. Plasma: Every 28 days\n" +
+            "4. Double red cells: Every 112 days",
+        'Temporary Restrictions': "You cannot donate blood if:\n\n" +
+            "1. You have a cold or flu\n" +
+            "2. You're taking antibiotics\n" +
+            "3. You've had recent surgery\n" +
+            "4. You've had a tattoo in the last 6 months\n" +
+            "5. You're pregnant or recently gave birth\n" +
+            "6. You've traveled to malaria-endemic areas recently",
+        'Medical Material Blood Loss Prevention': "How to prevent blood loss with medical materials:\n\n" +
+            "1. Apply direct pressure using sterile gauze\n" +
+            "2. Use medical tourniquet if available\n" +
+            "3. Apply pressure bandage\n" +
+            "4. Use hemostatic agents if available\n" +
+            "5. Elevate the injured limb above heart level\n" +
+            "6. Apply cold compress to reduce swelling\n" +
+            "7. Monitor vital signs\n" +
+            "8. Keep sterile dressing on until medical help arrives",
+        'Home Blood Loss Prevention': "How to prevent blood loss at home with limited materials:\n\n" +
+            "1. Use clean cloth or towel for direct pressure\n" +
+            "2. Elevate the injured area\n" +
+            "3. Use ice pack or frozen vegetables wrapped in cloth\n" +
+            "4. Apply pressure points if needed\n" +
+            "5. Use clean plastic wrap as temporary dressing\n" +
+            "6. Keep the person warm\n" +
+            "7. Monitor consciousness\n" +
+            "8. Call emergency services immediately",
+        'Outside Blood Loss Prevention': "How to handle blood loss in accidents or emergencies outside:\n\n" +
+            "1. Ensure scene safety first\n" +
+            "2. Call emergency services immediately\n" +
+            "3. Use any available clean cloth for pressure\n" +
+            "4. Apply direct pressure to wound\n" +
+            "5. Elevate injured area if possible\n" +
+            "6. Use clothing items as makeshift bandages\n" +
+            "7. Keep victim warm and calm\n" +
+            "8. Monitor breathing and consciousness\n" +
+            "9. Do not remove soaked dressings\n" +
+            "10. Stay with the victim until help arrives"
+    },
+    'hi': {
+        'Before Donation Health Tips': "रक्तदान से पहले महत्वपूर्ण स्वास्थ्य सुझाव:\n\n" +
+            "1. पर्याप्त नींद लें (7-8 घंटे)\n" +
+            "2. दान से 2-3 घंटे पहले स्वस्थ भोजन करें\n" +
+            "3. खूब पानी पिएं (कम से कम 2-3 गिलास)\n" +
+            "4. वसायुक्त भोजन से बचें\n" +
+            "5. दान से कम से कम 1 घंटे पहले धूम्रपान न करें\n" +
+            "6. दान से 24 घंटे पहले शराब से बचें\n" +
+            "7. ऐसे कपड़े पहनें जिनकी बाजू ऊपर की जा सके",
+        'After Donation Health Tips': "रक्तदान के बाद पालन करने के लिए महत्वपूर्ण सुझाव:\n\n" +
+            "1. दान के बाद 10-15 मिनट आराम करें\n" +
+            "2. 48 घंटे तक अतिरिक्त तरल पदार्थ पिएं\n" +
+            "3. 24 घंटे तक भारी वजन उठाने या कठोर व्यायाम से बचें\n" +
+            "4. पट्टी कई घंटों तक लगाए रखें\n" +
+            "5. लोहे से भरपूर भोजन करें\n" +
+            "6. 24 घंटे तक शराब से बचें\n" +
+            "7. चक्कर आने पर पैर ऊपर करके लेट जाएं",
+        'Regular Health Tips for Better Blood Quality': "रक्त की बेहतर गुणवत्ता के लिए नियमित स्वास्थ्य सुझाव:\n\n" +
+            "1. लोहे से भरपूर संतुलित आहार लें\n" +
+            "2. पर्याप्त पानी पिएं (प्रतिदिन 8-10 गिलास)\n" +
+            "3. नियमित व्यायाम करें\n" +
+            "4. पर्याप्त नींद लें\n" +
+            "5. धूम्रपान आणि अधिक शराब से बचें\n" +
+            "6. तणाव व्यवस्थापित करें\n" +
+            "7. नियमित स्वास्थ्य तपासणी कराएं",
+        'Age and Weight Requirements': "रक्तदान के लिए पात्रता मानदंड:\n\n" +
+            "1. आयु: 18-65 वर्ष\n" +
+            "2. वजन: न्यूनतम 45 किलोग्राम\n" +
+            "3. हीमोग्लोबिन: न्यूनतम 12.5g/dL\n" +
+            "4. रक्तचाप: 90/60 से 160/100 mmHg\n" +
+            "5. शारीरिक तापमान: सामान्य (98.6°F/37°C)",
+        'Donation Frequency': "रक्तदान की आवृत्ति दिशानिर्देश:\n\n" +
+            "1. पूर्ण रक्त: हर 56 दिन (8 सप्ताह)\n" +
+            "2. प्लेटलेट्स: हर 7 दिन\n" +
+            "3. प्लाज्मा: हर 28 दिन\n" +
+            "4. डबल रेड सेल्स: हर 112 दिन",
+        'Temporary Restrictions': "आप रक्तदान नहीं कर सकते यदि:\n\n" +
+            "1. आपको सर्दी या फ्लू है\n" +
+            "2. आप एंटीबायोटिक्स ले रहे हैं\n" +
+            "3. आपकी हाल ही में सर्जरी हुई है\n" +
+            "4. आपने पिछले 6 महीनों में टैटू बनवाया है\n" +
+            "5. आप गर्भवती हैं या हाल ही में बच्चे को जन्म दिया है\n" +
+            "6. आप हाल ही में मलेरिया प्रभावित क्षेत्रों में गए हैं",
+        'Medical Material Blood Loss Prevention': "चिकित्सक सामग्री के साथ रक्तस्राव को रोकने के तरीके:\n\n" +
+            "1. निर्जंतुक पट्टी वापरून थेट दाब द्या\n" +
+            "2. उपलब्ध असल्यास वैद्यकीय टूर्निकेट वापरा\n" +
+            "3. दाब पट्टी लावा\n" +
+            "4. उपलब्ध असल्यास हेमोस्टॅटिक एजंट वापरा\n" +
+            "5. जखमी अवयवाला हृदय पातळीपेक्षा वर उचला\n" +
+            "6. सूज कमी करण्यासाठी थंड सिकाई करें\n" +
+            "7. महत्वाच्या संकेतांचे निरीक्षण करें\n" +
+            "8. चिकित्सकीय मदत येईपर्यंत निर्जंतुक पट्टी ठेवा",
+        'Home Blood Loss Prevention': "सीमित सामग्री के साथ घर पर रक्तस्राव को रोकने के तरीके:\n\n" +
+            "1. सीधा दबाव के लिए स्वच्छ कापड किंवा टॉवेल वापरा\n" +
+            "2. जखमी भाग वर उचला\n" +
+            "3. कापडात गुंडाळलेला आइस पॅक किंवा गोठवलेली भाजीपाला वापरा\n" +
+            "4. आवश्यक असल्यास दाब बिंदू वापरा\n" +
+            "5. तात्पुरते पट्टी म्हणून स्वच्छ प्लास्टिक रॅप वापरा\n" +
+            "6. व्यक्तीला उबदार ठेवा\n" +
+            "7. जागरूकतेचे निरीक्षण करा\n" +
+            "8. तात्काळ आपत्कालीन सेवा कॉल करा",
+        'Outside Blood Loss Prevention': "बाहर दुर्घटनाओं या आपत्कालीन परिस्थितीत रक्तस्राव व्यवस्थापित करण्याचे मार्ग:\n\n" +
+            "1. प्रथम दृश्य सुरक्षा सुनिश्चित करें\n" +
+            "2. तात्काळ आपत्कालीन सेवा कॉल करा\n" +
+            "3. दाबासाठी उपलब्ध स्वच्छ कापड वापरा\n" +
+            "4. जखमेवर थेट दाब द्या\n" +
+            "5. शक्य असल्यास जखमी भाग वर उचला\n" +
+            "6. कपडे तात्पुरते पट्टी म्हणून वापरा\n" +
+            "7. पीडिताला उबदार आणि शांत ठेवा\n" +
+            "8. श्वासोच्छ्वास आणि जागरूकतेचे निरीक्षण करा\n" +
+            "9. भिजलेल्या पट्ट्या काढू नका\n" +
+            "10. मदत येईपर्यंत पीडिताजवळ रहा"
+    },
+    'mr': {
+        'Before Donation Health Tips': "रक्तदान करण्यापूर्वी महत्वाच्या आरोग्य टिप्स:\n\n" +
+            "1. पुरेशी झोप घ्या (7-8 तास)\n" +
+            "2. दान करण्यापूर्वी 2-3 तासांनी निरोगी जेवण करा\n" +
+            "3. पुरेसे पाणी प्या (किमान 2-3 ग्लास)\n" +
+            "4. चरबीयुक्त पदार्थ टाळा\n" +
+            "5. दान करण्यापूर्वी किमान 1 तास धूम्रपान करू नका\n" +
+            "6. दान करण्यापूर्वी 24 तास मद्यपान टाळा\n" +
+            "7. बाही वर करता येणारे आरामदायक कपडे घाला",
+        'After Donation Health Tips': "दानानंतर पालन करने के लिए महत्वपूर्ण टिप्स:\n\n" +
+            "1. दानानंतर 10-15 मिनटे आराम करें\n" +
+            "2. 48 घंटे तक अतिरिक्त तरल पदार्थ पिएं\n" +
+            "3. 24 घंटे तक भारी वजन उठाने या कठोर व्यायाम से बचें\n" +
+            "4. पट्टी कई घंटों तक लगाए रखें\n" +
+            "5. लोहे से भरपूर भोजन करें\n" +
+            "6. 24 घंटे तक शराब से बचें\n" +
+            "7. चक्कर आने पर पैर ऊपर करके लेट जाएं",
+        'Regular Health Tips for Better Blood Quality': "दानासाठी चांगली रक्त गुणवत्ता राखण्यासाठी:\n\n" +
+            "1. लोहे से भरपूर संतुलित आहार लें\n" +
+            "2. पुरेसे पाणी प्या (दररोज 8-10 ग्लास)\n" +
+            "3. नियमित व्यायाम करें\n" +
+            "4. पुरेशी झोप घ्या\n" +
+            "5. धूम्रपान आणि अधिक शराब से बचें\n" +
+            "6. तणाव व्यवस्थापित करें\n" +
+            "7. नियमित आरोग्य तपासणी कराएं",
+        'Age and Weight Requirements': "रक्तदानासाठी पात्रता:\n\n" +
+            "1. वय: 18-65 वर्षे\n" +
+            "2. वजन: किमान 45 किलो\n" +
+            "3. हिमोग्लोबिन: किमान 12.5g/dL\n" +
+            "4. रक्तचाप: 90/60 ते 160/100 mmHg\n" +
+            "5. शारीरिक तापमान: सामान्य (98.6°F/37°C)",
+        'Donation Frequency': "रक्तदान वारंवारता मार्गदर्शक तत्त्वे:\n\n" +
+            "1. संपूर्ण रक्त: दर 56 दिवसांनी (8 आठवडे)\n" +
+            "2. प्लेटलेट्स: दर 7 दिवसांनी\n" +
+            "3. प्लाझ्मा: दर 28 दिवसांनी\n" +
+            "4. डबल लाल रक्तपेशी: दर 112 दिवसांनी",
+        'Temporary Restrictions': "You cannot donate blood if:\n\n" +
+            "1. You have a cold or flu\n" +
+            "2. You're taking antibiotics\n" +
+            "3. You've had recent surgery\n" +
+            "4. You've had a tattoo in the last 6 months\n" +
+            "5. You're pregnant or recently gave birth\n" +
+            "6. You've traveled to malaria-endemic areas recently",
+        'Medical Material Blood Loss Prevention': "वैद्यकीय सामग्रीासह रक्तस्त्राव रोखण्याचे मार्ग:\n\n" +
+            "1. निर्जंतुक पट्टी वापरून थेट दाब द्या\n" +
+            "2. उपलब्ध असल्यास वैद्यकीय टूर्निकेट वापरा\n" +
+            "3. दाब पट्टी लावा\n" +
+            "4. उपलब्ध असल्यास हेमोस्टॅटिक एजंट वापरा\n" +
+            "5. जखमी अवयवाला हृदय पातळीपेक्षा वर उचला\n" +
+            "6. सूज कमी करण्यासाठी थंड सिकाई करें\n" +
+            "7. महत्वाच्या संकेतांचे निरीक्षण करें\n" +
+            "8. वैद्यकीय मदत येईपर्यंत निर्जंतुक पट्टी ठेवा",
+        'Home Blood Loss Prevention': "मर्यादित सामग्रीासह घरी रक्तस्त्राव रोखण्याचे मार्ग:\n\n" +
+            "1. सीधा दबाव के लिए स्वच्छ कापड किंवा टॉवेल वापरा\n" +
+            "2. जखमी भाग वर उचला\n" +
+            "3. कापडात गुंडाळलेला आइस पॅक किंवा गोठवलेली भाजीपाला वापरा\n" +
+            "4. आवश्यक असल्यास दाब बिंदू वापरा\n" +
+            "5. तात्पुरते पट्टी म्हणून स्वच्छ प्लास्टिक रॅप वापरा\n" +
+            "6. व्यक्तीला उबदार ठेवा\n" +
+            "7. जागरूकतेचे निरीक्षण करा\n" +
+            "8. तात्काळ आपत्कालीन सेवा कॉल करा",
+        'Outside Blood Loss Prevention': "बाहेर अपघात किंवा आपत्कालीन परिस्थितीत रक्तस्त्राव व्यवस्थापित करण्याचे मार्ग:\n\n" +
+            "1. प्रथम दृश्य सुरक्षा सुनिश्चित करा\n" +
+            "2. तात्काळ आपत्कालीन सेवा कॉल करा\n" +
+            "3. दाबासाठी उपलब्ध स्वच्छ कापड वापरा\n" +
+            "4. जखमेवर थेट दाब द्या\n" +
+            "5. शक्य असल्यास जखमी भाग वर उचला\n" +
+            "6. कपडे तात्पुरते पट्टी म्हणून वापरा\n" +
+            "7. पीडिताला उबदार आणि शांत ठेवा\n" +
+            "8. श्वासोच्छ्वास आणि जागरूकतेचे निरीक्षण करा\n" +
+            "9. भिजलेल्या पट्ट्या काढू नका\n" +
+            "10. मदत येईपर्यंत पीडिताजवळ रहा"
+    }
+};
+
+// Update the questionTranslations data structure
+const questionTranslations = {
+    'en': {
+        'Before Donation Health Tips': 'Before Donation Health Tips',
+        'After Donation Health Tips': 'After Donation Health Tips',
+        'Regular Health Tips for Better Blood Quality': 'Regular Health Tips',
+        'Age and Weight Requirements': 'Age and Weight Requirements',
+        'Donation Frequency': 'Donation Frequency',
+        'Temporary Restrictions': 'Temporary Restrictions',
+        'Medical Material Blood Loss Prevention': 'Prevent Blood Loss with Medical Materials',
+        'Home Blood Loss Prevention': 'Prevent Blood Loss at Home',
+        'Outside Blood Loss Prevention': 'Prevent Blood Loss Outside'
+    },
+    'hi': {
+        'Before Donation Health Tips': 'दान से पहले स्वास्थ्य सुझाव',
+        'After Donation Health Tips': 'दान के बाद स्वास्थ्य सुझाव',
+        'Regular Health Tips for Better Blood Quality': 'नियमित स्वास्थ्य सुझाव',
+        'Age and Weight Requirements': 'आयु और वजन आवश्यकताएं',
+        'Donation Frequency': 'दान आवृत्ति',
+        'Temporary Restrictions': 'अस्थायी प्रतिबंध',
+        'Medical Material Blood Loss Prevention': 'चिकित्सक सामग्री के साथ रक्तस्राव रोकें',
+        'Home Blood Loss Prevention': 'घर पर रक्तस्राव रोकें',
+        'Outside Blood Loss Prevention': 'बाहर रक्तस्राव रोकें'
+    },
+    'mr': {
+        'Before Donation Health Tips': 'दान करण्यापूर्वी आरोग्य टिप्स',
+        'After Donation Health Tips': 'दानानंतर आरोग्य टिप्स',
+        'Regular Health Tips for Better Blood Quality': 'नियमित आरोग्य टिप्स',
+        'Age and Weight Requirements': 'वय आणि वजन आवश्यकता',
+        'Donation Frequency': 'दान वारंवारता',
+        'Temporary Restrictions': 'तात्पुरती निर्बंध',
+        'Medical Material Blood Loss Prevention': 'वैद्यकीय साहित्यासह रक्तस्त्राव रोका',
+        'Home Blood Loss Prevention': 'घरी रक्तस्त्राव रोका',
+        'Outside Blood Loss Prevention': 'बाहेर रक्तस्त्राव रोका'
+    }
+};
+
+// Add auto-resize for textarea
+document.getElementById('userInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
+</script> 

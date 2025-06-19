@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Notice Cards</h2>
+    
+    <div class="row" id="notices-container">
+        {% for notice in notices %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if notice.image_url %}
+                <img src="{{ notice.image_url }}" class="card-img-top" alt="Notice Image">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ notice.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ notice.organization_type }} - {{ notice.organization_name }}</h6>
+                    
+                    <p class="card-text">{{ notice.description }}</p>
+                    
+                    <div class="mt-3">
+                        <strong>Contact Person:</strong> {{ notice.contact_person }}<br>
+                        <strong>Phone:</strong> {{ notice.contact_number }}<br>
+                        <strong>Email:</strong> {{ notice.email }}<br>
+                        <strong>Address:</strong> {{ notice.address }}<br>
+                        {% if notice.distance %}
+                        <strong>Distance:</strong> {{ notice.distance }} km<br>
+                        {% endif %}
+                    </div>
+
+                    {% if notice.event_date %}
+                    <div class="mt-2">
+                        <strong>Event Date:</strong> {{ notice.event_date }}
+                    </div>
+                    {% endif %}
+
+                    {% if notice.requirements %}
+                    <div class="mt-2">
+                        <strong>Requirements:</strong>
+                        <ul class="list-unstyled">
+                            {% for req in notice.requirements %}
+                            <li>- {{ req }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if notice.blood_groups_needed %}
+                    <div class="mt-2">
+                        <strong>Blood Groups Needed:</strong>
+                        <div class="blood-groups">
+                            {% for group in notice.blood_groups_needed %}
+                            <span class="badge bg-danger me-1">{{ group }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    Posted: {{ notice.created_at.strftime('%Y-%m-%d %H:%M') if notice.created_at else 'Date not available' }}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No active notices available at the moment.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+.blood-groups .badge {
+    font-size: 0.9em;
+}
+</style>
+{% endblock %} 

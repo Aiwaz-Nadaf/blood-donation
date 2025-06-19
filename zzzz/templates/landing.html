@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section bg-danger text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="display-4 fw-bold mb-4">{{ translations.hero_title }}</h1>
+                <p class="lead mb-4">{{ translations.hero_subtitle }}</p>
+                <div class="d-grid gap-3 d-sm-flex justify-content-sm-start">
+                    <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg px-4">
+                        {{ translations.get_started }}
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">
+                        {{ translations.login }}
+                    </a>
+                    <a href="{{ url_for('admin_landing') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="fas fa-user-shield me-2"></i>{{ translations.admin_login }}
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <img src="{{ url_for('static', filename='images/hero-image.png') }}" alt="Blood Donation" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <h2 class="text-center mb-5">{{ translations.features_title }}</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-heartbeat fa-3x text-danger mb-3"></i>
+                    <h5 class="card-title">Save Lives</h5>
+                    <p class="card-text">Your blood donation can save up to three lives. Every drop counts!</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-map-marker-alt fa-3x text-danger mb-3"></i>
+                    <h5 class="card-title">Find Donors</h5>
+                    <p class="card-text">Quickly locate blood donors in your area when needed.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-bell fa-3x text-danger mb-3"></i>
+                    <h5 class="card-title">Get Notified</h5>
+                    <p class="card-text">Receive alerts when your blood type is needed nearby.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">{{ translations.how_it_works }}</h2>
+        <div class="row">
+            <div class="col-md-3 text-center">
+                <div class="step-number">1</div>
+                <h5>Register</h5>
+                <p>Create your account and provide your details</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="step-number">2</div>
+                <h5>Verify</h5>
+                <p>Complete your profile verification</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="step-number">3</div>
+                <h5>Donate</h5>
+                <p>Respond to requests and donate blood</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="step-number">4</div>
+                <h5>Save Lives</h5>
+                <p>Make a difference in someone's life</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="container py-5 text-center">
+    <h2 class="mb-4">{{ translations.join_us }}</h2>
+    <p class="lead mb-4">Be a part of our life-saving community today!</p>
+    <a href="{{ url_for('signup') }}" class="btn btn-danger btn-lg px-4">
+        {{ translations.get_started }}
+    </a>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-weight: bold;
+}
+
+.card {
+    transition: transform 0.3s;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-outline-light:hover {
+    background-color: white;
+    color: #dc3545;
+}
+
+.btn-outline-light i {
+    margin-right: 5px;
+}
+</style>
+{% endblock %}

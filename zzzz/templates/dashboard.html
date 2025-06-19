@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, {{ user.name }}!</h4>
+                    <p class="card-text">Blood Group: {{ user.blood_group }}</p>
+                    <a href="{{ url_for('profile') }}" class="btn btn-light">View Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Blood Donation Requests Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Blood Donation Requests</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Pending Requests -->
+                    <div id="pending-requests">
+                        <h6 class="text-danger mb-3">Pending Requests</h6>
+                        <div id="pending-requests-list" class="list-group">
+                            <!-- Pending requests will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Request History -->
+                    <div id="request-history" class="mt-4">
+                        <h6 class="text-danger mb-3">Request History</h6>
+                        <div id="request-history-list" class="list-group">
+                            <!-- Request history will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Quick Stats -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Your Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total Donations:</span>
+                        <span class="badge bg-danger" id="total-donations">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Last Donation:</span>
+                        <span id="last-donation">Never</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Next Eligible:</span>
+                        <span id="next-eligible">Now</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Camps -->
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Upcoming Blood Camps</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group" id="upcoming-camps">
+                        <!-- Upcoming camps will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chatbot -->
+{% include 'chatbot.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Function to load pending requests
+function loadPendingRequests() {
+    fetch('/user/pending_requests')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const pendingList = document.getElementById('pending-requests-list');
+                pendingList.innerHTML = '';
+                
+                data.requests.forEach(request => {
+                    const adminDetails = request.admin_details || {};
+                    const requestCard = document.createElement('div');
+                    requestCard.className = 'list-group-item mb-3';
+                    requestCard.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${adminDetails.name}</h6>
+                                <p class="mb-1">Blood Group Needed: ${request.data.blood_group_needed}</p>
+                                <p class="mb-1">Distance: ${request.data.distance}km</p>
+                                <p class="mb-1">Address: ${adminDetails.address}</p>
+                                <p class="mb-1">Phone: ${adminDetails.phone}</p>
+                                <small class="text-muted">Requested on: ${request.created_at}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-success btn-sm me-2" onclick="respondToRequest('${request.request_id}', 'accepted')">
+                                    Accept
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="respondToRequest('${request.request_id}', 'rejected')">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    pendingList.appendChild(requestCard);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading pending requests:', error));
+}
+
+// Function to load request history
+function loadRequestHistory() {
+    fetch('/user/request_history')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const historyList = document.getElementById('request-history-list');
+                historyList.innerHTML = '';
+                
+                data.requests.forEach(request => {
+                    const adminDetails = request.admin_details || {};
+                    const statusClass = request.status === 'responded' 
+                        ? (request.response === 'accepted' ? 'text-success' : 'text-danger')
+                        : 'text-warning';
+                    
+                    const requestCard = document.createElement('div');
+                    requestCard.className = 'list-group-item mb-2';
+                    requestCard.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${adminDetails.name}</h6>
+                                <p class="mb-1">Blood Group Needed: ${request.data.blood_group_needed}</p>
+                                <p class="mb-1">Distance: ${request.data.distance}km</p>
+                                <p class="mb-1">Address: ${adminDetails.address}</p>
+                                <p class="mb-1">Phone: ${adminDetails.phone}</p>
+                                <small class="text-muted">Requested on: ${request.created_at}</small>
+                                ${request.response_time ? `<small class="text-muted">Responded on: ${request.response_time}</small>` : ''}
+                            </div>
+                            <div>
+                                <span class="badge ${statusClass}">
+                                    ${request.status === 'pending' ? 'Pending' : 
+                                      request.response === 'accepted' ? 'Accepted' : 'Rejected'}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    historyList.appendChild(requestCard);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading request history:', error));
+}
+
+// Function to load user stats
+function loadUserStats() {
+    fetch('/user/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-donations').textContent = data.stats.total_donations;
+                document.getElementById('last-donation').textContent = data.stats.last_donation || 'Never';
+                document.getElementById('next-eligible').textContent = data.stats.next_eligible || 'Now';
+            }
+        })
+        .catch(error => console.error('Error loading user stats:', error));
+}
+
+// Function to load upcoming camps
+function loadUpcomingCamps() {
+    fetch('/user/upcoming_camps')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const campsList = document.getElementById('upcoming-camps');
+                campsList.innerHTML = '';
+                
+                data.camps.forEach(camp => {
+                    const campCard = document.createElement('div');
+                    campCard.className = 'list-group-item';
+                    campCard.innerHTML = `
+                        <h6 class="mb-1">${camp.name}</h6>
+                        <p class="mb-1">${camp.date}</p>
+                        <p class="mb-1">${camp.location}</p>
+                        <a href="#" class="btn btn-danger btn-sm">View Details</a>
+                    `;
+                    campsList.appendChild(campCard);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading upcoming camps:', error));
+}
+
+// Function to respond to a request
+function respondToRequest(requestId, response) {
+    fetch('/user/respond_to_request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            request_id: requestId,
+            response: response
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload both pending requests and history
+            loadPendingRequests();
+            loadRequestHistory();
+            
+            // Show success message
+            const message = response === 'accepted' 
+                ? 'Thank you for accepting the blood donation request!'
+                : 'You have rejected the blood donation request.';
+            alert(message);
+        } else {
+            alert('Error responding to request: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error responding to request:', error);
+        alert('Error responding to request. Please try again.');
+    });
+}
+
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadPendingRequests();
+    loadRequestHistory();
+    loadUserStats();
+    loadUpcomingCamps();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">Manage Notice Cards</h2>
+            
+            <!-- Create Notice Form -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Create New Notice</h5>
+                </div>
+                <div class="card-body">
+                    <form id="createNoticeForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="title" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="organization_type" class="form-label">Organization Type</label>
+                                <select class="form-select" id="organization_type" required>
+                                    <option value="NGO">NGO</option>
+                                    <option value="Blood Bank">Blood Bank</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="organization_name" class="form-label">Organization Name</label>
+                                <input type="text" class="form-control" id="organization_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="contact_person" class="form-label">Contact Person</label>
+                                <input type="text" class="form-control" id="contact_person" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="contact_number" class="form-label">Contact Number</label>
+                                <input type="tel" class="form-control" id="contact_number" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" rows="2" required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="event_date" class="form-label">Event Date (Optional)</label>
+                                <input type="date" class="form-control" id="event_date">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="image_url" class="form-label">Image URL (Optional)</label>
+                                <input type="url" class="form-control" id="image_url">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Requirements (Optional)</label>
+                            <div id="requirementsList">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control requirement-input" placeholder="Add requirement">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="addRequirement()">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Blood Groups Needed</label>
+                            <div class="row">
+                                {% for group in ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] %}
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input blood-group" type="checkbox" value="{{ group }}" id="blood_group_{{ group }}">
+                                        <label class="form-check-label" for="blood_group_{{ group }}">
+                                            {{ group }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Create Notice</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- List of Notices -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Notices</h5>
+                </div>
+                <div class="card-body">
+                    <div id="noticesList" class="row">
+                        <!-- Notices will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addRequirement() {
+    const container = document.getElementById('requirementsList');
+    const newInput = document.createElement('div');
+    newInput.className = 'input-group mb-2';
+    newInput.innerHTML = `
+        <input type="text" class="form-control requirement-input" placeholder="Add requirement">
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">-</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="addRequirement()">+</button>
+    `;
+    container.appendChild(newInput);
+}
+
+document.getElementById('createNoticeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const requirements = Array.from(document.querySelectorAll('.requirement-input'))
+        .map(input => input.value)
+        .filter(value => value.trim() !== '');
+    
+    const bloodGroups = Array.from(document.querySelectorAll('.blood-group:checked'))
+        .map(checkbox => checkbox.value);
+    
+    const noticeData = {
+        title: document.getElementById('title').value,
+        organization_type: document.getElementById('organization_type').value,
+        organization_name: document.getElementById('organization_name').value,
+        contact_person: document.getElementById('contact_person').value,
+        contact_number: document.getElementById('contact_number').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        description: document.getElementById('description').value,
+        event_date: document.getElementById('event_date').value,
+        image_url: document.getElementById('image_url').value,
+        requirements: requirements,
+        blood_groups_needed: bloodGroups
+    };
+    
+    try {
+        const response = await fetch('/admin/create_notice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(noticeData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Notice created successfully!');
+            loadNotices(); // Reload notices list
+            e.target.reset(); // Reset form
+        } else {
+            alert('Error creating notice: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error creating notice. Please try again.');
+    }
+});
+
+async function loadNotices() {
+    try {
+        const response = await fetch('/admin/notices');
+        const data = await response.json();
+        
+        if (data.success) {
+            const noticesList = document.getElementById('noticesList');
+            
+            if (data.notices.length === 0) {
+                noticesList.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            No notices created yet.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            noticesList.innerHTML = data.notices.map(notice => `
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        ${notice.image_url ? `<img src="${notice.image_url}" class="card-img-top" alt="Notice Image">` : ''}
+                        <div class="card-body">
+                            <h5 class="card-title">${notice.title}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">${notice.organization_type} - ${notice.organization_name}</h6>
+                            <p class="card-text">${notice.description}</p>
+                            
+                            <div class="mt-3">
+                                <strong>Contact Person:</strong> ${notice.contact_person}<br>
+                                <strong>Phone:</strong> ${notice.contact_number}<br>
+                                <strong>Email:</strong> ${notice.email}<br>
+                                <strong>Address:</strong> ${notice.address}
+                            </div>
+                            
+                            ${notice.event_date ? `
+                                <div class="mt-2">
+                                    <strong>Event Date:</strong> ${new Date(notice.event_date).toLocaleDateString()}
+                                </div>
+                            ` : ''}
+                            
+                            ${notice.requirements && notice.requirements.length > 0 ? `
+                                <div class="mt-2">
+                                    <strong>Requirements:</strong>
+                                    <ul class="list-unstyled">
+                                        ${notice.requirements.map(req => `<li>- ${req}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            
+                            ${notice.blood_groups_needed && notice.blood_groups_needed.length > 0 ? `
+                                <div class="mt-2">
+                                    <strong>Blood Groups Needed:</strong>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        ${notice.blood_groups_needed.map(group => `
+                                            <span class="badge bg-danger">${group}</span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    Posted: ${new Date(notice.created_at).toLocaleString()}
+                                </small>
+                                <div>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteNotice('${notice._id}')">
+                                        Delete
+                                    </button>
+                                    <button class="btn btn-sm ${notice.status === 'active' ? 'btn-warning' : 'btn-success'}" 
+                                            onclick="toggleNoticeStatus('${notice._id}', '${notice.status}')">
+                                        ${notice.status === 'active' ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            console.error('Error loading notices:', data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function deleteNotice(noticeId) {
+    if (!confirm('Are you sure you want to delete this notice?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/notice/${noticeId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Notice deleted successfully!');
+            loadNotices();
+        } else {
+            alert('Error deleting notice: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting notice. Please try again.');
+    }
+}
+
+async function toggleNoticeStatus(noticeId, currentStatus) {
+    try {
+        const response = await fetch(`/admin/notice/${noticeId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: currentStatus === 'active' ? 'inactive' : 'active'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Notice status updated successfully!');
+            loadNotices();
+        } else {
+            alert('Error updating notice status: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating notice status. Please try again.');
+    }
+}
+
+// Load notices when page loads
+document.addEventListener('DOMContentLoaded', loadNotices);
+</script>
+{% endblock %} 
